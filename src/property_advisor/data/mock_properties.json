@@ -1,0 +1,87 @@
+{
+  "whitefield_bangalore": {
+    "match_keywords": ["whitefield", "itpl", "epip"],
+    "city": "Bangalore",
+    "locality": "Whitefield",
+    "pin_code": "560066",
+    "price_inr": 9500000,
+    "area_sqft": 1250,
+    "property_type": "flat",
+    "amenities": ["clubhouse", "gym", "swimming pool", "24x7 security", "power backup", "covered parking"],
+    "location_attributes": {
+      "metro_access": true,
+      "metro_line": "Namma Metro Purple Line (Whitefield extension)",
+      "schools_nearby": true,
+      "it_corridor_proximity_km": 2.5,
+      "tech_parks_nearby": ["ITPL", "EPIP Zone", "Prestige Tech Park"]
+    }
+  },
+  "worli_mumbai": {
+    "match_keywords": ["worli"],
+    "city": "Mumbai",
+    "locality": "Worli",
+    "pin_code": "400018",
+    "price_inr": 45000000,
+    "area_sqft": 900,
+    "property_type": "flat",
+    "amenities": ["sea view", "clubhouse", "gym", "24x7 security", "valet parking"],
+    "location_attributes": {
+      "metro_access": true,
+      "metro_line": "Mumbai Metro Line 3 (under construction)",
+      "schools_nearby": true,
+      "it_corridor_proximity_km": null,
+      "tech_parks_nearby": []
+    }
+  },
+  "dadar_kurla_mumbai": {
+    "match_keywords": ["dadar", "kurla", "sion"],
+    "city": "Mumbai",
+    "locality": "Dadar-Kurla Belt",
+    "pin_code": "400014",
+    "price_inr": 18000000,
+    "area_sqft": 750,
+    "property_type": "flat",
+    "amenities": ["lift", "24x7 security", "covered parking"],
+    "location_attributes": {
+      "metro_access": true,
+      "metro_line": "Mumbai Metro Line 2B",
+      "schools_nearby": true,
+      "it_corridor_proximity_km": 6,
+      "tech_parks_nearby": ["BKC"],
+      "low_lying_area": true
+    }
+  },
+  "hinjewadi_pune": {
+    "match_keywords": ["hinjewadi", "hinjawadi"],
+    "city": "Pune",
+    "locality": "Hinjewadi Phase 2",
+    "pin_code": "411057",
+    "price_inr": 7200000,
+    "area_sqft": 1100,
+    "property_type": "flat",
+    "amenities": ["clubhouse", "gym", "garden", "24x7 security"],
+    "location_attributes": {
+      "metro_access": false,
+      "metro_line": "Pune Metro extension (proposed)",
+      "schools_nearby": true,
+      "it_corridor_proximity_km": 1.0,
+      "tech_parks_nearby": ["Rajiv Gandhi Infotech Park"]
+    }
+  },
+  "muzaffarpur_bihar": {
+    "match_keywords": ["muzaffarpur"],
+    "city": "Muzaffarpur",
+    "locality": "Saraiyaganj",
+    "pin_code": "842002",
+    "price_inr": 3500000,
+    "area_sqft": 1400,
+    "property_type": "plot",
+    "amenities": ["boundary wall"],
+    "location_attributes": {
+      "metro_access": false,
+      "schools_nearby": true,
+      "it_corridor_proximity_km": null,
+      "tech_parks_nearby": []
+    }
+  }
+}

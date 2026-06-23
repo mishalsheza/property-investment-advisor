@@ -1,0 +1,30 @@
+{
+  "whitefield_bangalore": {
+    "crime_score": 22,
+    "flood_risk": "low",
+    "vacancy_risk": "low",
+    "regulatory_risk": "low",
+    "market_volatility": "low"
+  },
+  "worli_mumbai": {
+    "crime_score": 30,
+    "flood_risk": "medium",
+    "vacancy_risk": "medium",
+    "regulatory_risk": "low",
+    "market_volatility": "medium"
+  },
+  "dadar_kurla_mumbai": {
+    "crime_score": 35,
+    "flood_risk": "high",
+    "vacancy_risk": "medium",
+    "regulatory_risk": "medium",
+    "market_volatility": "medium"
+  },
+  "hinjewadi_pune": {
+    "crime_score": 18,
+    "flood_risk": "low",
+    "vacancy_risk": "medium",
+    "regulatory_risk": "medium",
+    "market_volatility": "medium"
+  }
+}

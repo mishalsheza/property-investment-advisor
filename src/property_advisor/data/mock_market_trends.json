@@ -1,0 +1,42 @@
+{
+  "whitefield_bangalore": {
+    "city": "Bangalore",
+    "locality": "Whitefield",
+    "appreciation_rate_5yr_pct": 9.2,
+    "demand_index": 8.5,
+    "supply_index": 4.0,
+    "rental_yield_avg_pct": 4.3,
+    "avg_monthly_rent_per_sqft_inr": 28,
+    "rera_registered_projects_pct": 92
+  },
+  "worli_mumbai": {
+    "city": "Mumbai",
+    "locality": "Worli",
+    "appreciation_rate_5yr_pct": 5.1,
+    "demand_index": 6.0,
+    "supply_index": 6.5,
+    "rental_yield_avg_pct": 1.8,
+    "avg_monthly_rent_per_sqft_inr": 65,
+    "rera_registered_projects_pct": 88
+  },
+  "dadar_kurla_mumbai": {
+    "city": "Mumbai",
+    "locality": "Dadar-Kurla Belt",
+    "appreciation_rate_5yr_pct": 6.8,
+    "demand_index": 7.2,
+    "supply_index": 5.0,
+    "rental_yield_avg_pct": 3.1,
+    "avg_monthly_rent_per_sqft_inr": 55,
+    "rera_registered_projects_pct": 80
+  },
+  "hinjewadi_pune": {
+    "city": "Pune",
+    "locality": "Hinjewadi Phase 2",
+    "appreciation_rate_5yr_pct": 7.5,
+    "demand_index": 7.0,
+    "supply_index": 6.8,
+    "rental_yield_avg_pct": 3.8,
+    "avg_monthly_rent_per_sqft_inr": 22,
+    "rera_registered_projects_pct": 70
+  }
+}
