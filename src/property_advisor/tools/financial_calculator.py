@@ -75,6 +75,16 @@ def calculate_break_even_years(total_investment_inr: float, annual_cash_flow_inr
 
 
 def _cash_flow_severity(annual_cash_flow_inr: float, price_inr: float) -> str:
+    """Classify cash-flow health.
+
+    IMPORTANT: this must be fed the *unlevered* (operating) cash flow, not the
+    fully-leveraged figure. Indian gross rental yields (~2-6%) never cover an
+    80%-LTV EMI, so a leveraged cash flow is deeply negative for essentially
+    every property — using it here mislabels the entire market as
+    "significantly_negative" and is what previously biased recommendations
+    toward AVOID. The operating cash flow reflects whether the asset itself is
+    income-positive (financing-independent), which is the meaningful signal.
+    """
     if price_inr <= 0:
         return "unknown"
     ratio_pct = (annual_cash_flow_inr / price_inr) * 100
@@ -155,7 +165,12 @@ def compute_investment_metrics(
         },
         "unlevered_annual_cash_flow_inr": unlevered_cash_flow_inr,
         "annual_cash_flow_inr": annual_cash_flow_inr,
-        "cash_flow_severity": _cash_flow_severity(annual_cash_flow_inr, price_inr),
+        # Severity / negative_cash_flow describe the property's OPERATING
+        # (unlevered) economics — the financing-independent measure of whether
+        # the asset itself earns money. The leveraged shortfall is reported
+        # separately as levered_cash_flow_negative so it can be weighed as a
+        # financing caveat without disqualifying every leveraged Indian rental.
+        "cash_flow_severity": _cash_flow_severity(unlevered_cash_flow_inr, price_inr),
         "rental_yield_pct": rental_yield_pct,
         "cap_rate_pct": cap_rate_pct,
         "projected_value_inr": round(projected_value_inr, 2),
@@ -163,7 +178,8 @@ def compute_investment_metrics(
         "roi_pct": roi_pct,
         "break_even_years": break_even_years,
         "horizon_years": horizon_years,
-        "negative_cash_flow": annual_cash_flow_inr < 0,
+        "negative_cash_flow": unlevered_cash_flow_inr < 0,
+        "levered_cash_flow_negative": annual_cash_flow_inr < 0,
         "strong_appreciation_evidence": strong_appreciation_evidence,
         "data_quality_confidence": 1.0 if (price_inr and rent_per_sqft) else 0.3,
     }

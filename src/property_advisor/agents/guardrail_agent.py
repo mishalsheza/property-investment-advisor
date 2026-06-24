@@ -43,11 +43,11 @@ CONFLICT_PAIRS = [
 ]
 
 CLAIM_AUDIT_SYSTEM_PROMPT = """Fact-check this real-estate justification against the grounded \
-data. Flag ONLY claims (numbers, named risks) with NO basis in the grounded data and not in the \
-RAG source list.
+data. Flag ONLY claims (numbers, property/market attributes, named risks) with NO basis in the \
+grounded data and not in the RAG source list.
 
 Do NOT flag: paraphrases of numbers actually in the data (e.g. risk_score=13 called "low"), \
-reasonable inferences from the metrics, generic reasoning, or bracketed \
+reasonable inferences from property/market/metrics/risk data, generic reasoning, or bracketed \
 [Guardrail override: ...] / [Note: ...] text (added by this pipeline, not the model).
 
 Be concise. Up to 3 flagged fragments max, no explanation."""
@@ -63,29 +63,17 @@ def _detect_conflicting_evidence(rag_context: list[dict]) -> list[str]:
     return conflicts
 
 
-_METRIC_AUDIT_KEYS = (
-    "roi_pct",
-    "rental_yield_pct",
-    "cap_rate_pct",
-    "annual_cash_flow_inr",
-    "cash_flow_severity",
-    "negative_cash_flow",
-    "strong_appreciation_evidence",
-)
-
-
 @traceable(name="guardrail_audit_claims", run_type="chain")
 def _audit_claims(state: PropertyState) -> ClaimAudit:
-    # Re-sending the full property/market dicts and full RAG chunk text here
-    # would just duplicate what the Recommendation Agent already consumed —
-    # the audit only needs the numeric grounding plus which sources exist.
     llm = get_llm()
     structured_llm = llm.with_structured_output(ClaimAudit)
 
-    metrics = {k: state.investment_metrics[k] for k in _METRIC_AUDIT_KEYS if k in state.investment_metrics}
+    risk_assessment = {k: v for k, v in state.risk_assessment.items() if k != "raw_indicators"}
     grounded_data = {
-        "metrics": metrics,
-        "risk_score": state.risk_assessment.get("risk_score"),
+        "property_data": state.property_data,
+        "market_data": state.market_data,
+        "investment_metrics": state.investment_metrics,
+        "risk_assessment": risk_assessment,
         "rag_sources": [r["source"] for r in state.rag_context],
     }
     user_prompt = f"""Justification: {state.recommendation.get('justification', '')}
