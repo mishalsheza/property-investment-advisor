@@ -19,19 +19,30 @@ The graph has seven agents over a shared `PropertyState`:
 
 ```mermaid
 graph TD;
-  start([start]) --> property_agent
-  property_agent --> market_agent
-  market_agent -. retry if data missing .-> property_agent
-  market_agent --> rag_agent
-  rag_agent --> investment_metrics_agent
-  investment_metrics_agent --> risk_assessment_agent
-  risk_assessment_agent --> recommendation_agent
-  recommendation_agent --> guardrail_agent
-  guardrail_agent -. reanalysis if needed .-> recommendation_agent
-  guardrail_agent --> human_review
-  human_review -. rejected .-> recommendation_agent
-  human_review -. approved .-> final_report
-  final_report --> end([end])
+	__start__([start]):::first
+	property_agent(1. Property Analysis Agent)
+	market_agent(2. Market Trends Agent)
+	data_retry_increment(retry gate)
+	rag_agent(3. RAG Research Agent)
+	investment_metrics_agent(4. Investment Metrics Agent)
+	risk_assessment_agent(5. Risk Assessment Agent)
+	recommendation_agent(6. Recommendation Agent — LLM)
+	guardrail_agent(7. Guardrail Agent — checks + LLM)
+	human_review(Human Approval — interrupt)
+	final_report(Final Report)
+	__end__([end]):::last
+
+	__start__ --> property_agent --> market_agent
+	market_agent -. data missing, retries left .-> data_retry_increment --> property_agent
+	market_agent -. data ok / retries exhausted .-> rag_agent
+	rag_agent --> investment_metrics_agent --> risk_assessment_agent --> recommendation_agent
+	recommendation_agent --> guardrail_agent
+	guardrail_agent -. unsupported claims, capped retries .-> recommendation_agent
+	guardrail_agent -. no valid decision .-> final_report
+	guardrail_agent -. human_review_required .-> human_review
+	human_review -. approved .-> final_report
+	human_review -. rejected + feedback .-> recommendation_agent
+	final_report --> __end__
 ```
 
 - Agents 1-5 are deterministic/tool-based: property lookup, market lookup, RAG,
