@@ -1,7 +1,6 @@
 """Financial Calculator Tool.
 
-All investment-metric calculations are deterministic and INR-based, per
-CLAUDE.md's requirement that financial calculations be tool-based, never
+All investment-metric calculations are deterministic and INR-based,financial calculations be tool-based, never
 LLM-based. No function here calls an LLM.
 """
 

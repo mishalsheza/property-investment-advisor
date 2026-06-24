@@ -12,8 +12,7 @@ Routing outcomes (see graph.py):
   MAX_REANALYSIS_RETRIES) — used only for fixable issues (unsupported claims).
 - "refuse": the recommendation is fundamentally unusable; end the graph
   without human approval (nothing valid to approve).
-- "human_review_required": forward to Human Approval, which is REQUIRED for
-  every run per CLAUDE.md regardless of guardrail outcome. `reasons` lists
+- "human_review_required": forward to Human Approval regardless of guardrail outcome. `reasons` lists
   every concern a human reviewer should weigh, even if it's empty (human
   approval is still mandatory with no flagged concerns).
 """

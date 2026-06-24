@@ -2,8 +2,7 @@
 
 Runs the LangGraph workflow end-to-end for a single property (or, with
 --demo, for three fixed scenarios back-to-back), pausing for human approval
-via LangGraph's interrupt mechanism before any final report is produced, per
-CLAUDE.md's Human-in-the-Loop requirement. After approval, JSON/Markdown/PDF
+via LangGraph's interrupt mechanism before any final report is produced. After approval, JSON/Markdown/PDF
 reports are generated automatically (see report_generator.py).
 """
 

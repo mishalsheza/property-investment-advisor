@@ -1,8 +1,7 @@
 """Agent 1: Property Analysis Agent.
 
 Deterministic, tool-based: parses the Indian address and retrieves property
-details from the Property Data Tool. No LLM call — per CLAUDE.md's coding
-standard to prefer deterministic workflows and keep business logic out of
+details from the Property Data Tool. No LLM call — to prefer deterministic workflows and keep business logic out of
 prompts wherever a reliable tool can do the job.
 """
 

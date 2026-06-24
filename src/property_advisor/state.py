@@ -1,7 +1,6 @@
 """Shared LangGraph state schema for the Property Investment Advisor.
 
-Every agent reads/writes only the fields relevant to its responsibility,
-per the contract in CLAUDE.md. Routing/control fields are kept separate
+Every agent reads/writes only the fields relevant to its responsibility. Routing/control fields are kept separate
 from the domain data fields so agents never need to touch them directly.
 """
 
@@ -33,8 +32,7 @@ class PropertyState(BaseModel):
     human_decision: dict[str, Any] = Field(default_factory=dict)
     final_report: dict[str, Any] = Field(default_factory=dict)
 
-    # --- Routing / control (not part of the domain spec, needed for
-    #     the conditional edges described in CLAUDE.md's Routing Logic) ---
+    # --- Routing / control ---
     data_retry_count: int = 0
     reanalysis_retry_count: int = 0
     workflow_status: str = "in_progress"

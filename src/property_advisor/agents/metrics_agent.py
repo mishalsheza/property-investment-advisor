@@ -2,7 +2,7 @@
 
 Deterministic, tool-based ROI/cap-rate/rental-yield/cash-flow/break-even
 calculations in INR. No LLM call — financial calculations must be
-deterministic per CLAUDE.md.
+deterministic.
 """
 
 from __future__ import annotations

@@ -6,7 +6,7 @@ evidence into a BUY/HOLD/AVOID call with justification, supporting evidence,
 and a confidence score. The prompt explicitly grounds the model in the
 already-computed numbers so it cannot invent its own financial figures.
 
-Rental-strategy cash-flow safety net (see CLAUDE.md amendments): negative
+Rental-strategy cash-flow safety net: negative
 cash flow must never be silently waved through into a BUY. The prompt tells
 the model the rules, and a deterministic post-processing step enforces them
 regardless of what the model actually outputs — financial decision rules are

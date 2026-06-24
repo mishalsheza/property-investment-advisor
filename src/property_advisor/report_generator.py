@@ -3,7 +3,7 @@
 Generates the final, human-approved investment report in three formats:
 reports/<name>.json, reports/<name>.md, reports/<name>.pdf.
 
-Per CLAUDE.md, this is only ever called AFTER human approval — never from
+This is only ever called AFTER human approval — never from
 inside the graph itself (report["status"] must be "approved").
 """
 

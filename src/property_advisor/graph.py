@@ -1,6 +1,6 @@
 """LangGraph wiring: nodes, conditional routing, and human-in-the-loop.
 
-Workflow (per CLAUDE.md):
+Workflow :
 
     property_agent -> market_agent -> [retry gate] -> rag_agent
       -> investment_metrics_agent -> risk_assessment_agent

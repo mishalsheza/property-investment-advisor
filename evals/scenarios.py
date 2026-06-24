@@ -1,4 +1,4 @@
-"""The 5 evaluation scenarios required by CLAUDE.md."""
+
 
 SCENARIOS = [
     {

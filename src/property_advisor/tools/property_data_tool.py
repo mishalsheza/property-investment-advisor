@@ -1,6 +1,6 @@
 """Property Data Tool.
 
-Retrieves Indian property details and location information. Per CLAUDE.md this
+Retrieves Indian property details and location information. This
 may be backed by MagicBricks/99acres/Housing.com/RapidAPI, or a mock dataset.
 This implementation uses a curated mock dataset (no network access required),
 matched against the free-text property address.

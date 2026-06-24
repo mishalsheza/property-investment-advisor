@@ -2,8 +2,7 @@
 
 Retrieves crime, flood, vacancy, and regulatory risk indicators for a locality
 and deterministically aggregates them into a single risk_score (0-100, higher
-is riskier). This calculation is NOT LLM-based, per CLAUDE.md's requirement
-that risk/financial calculations be deterministic and tool-based.
+is riskier). This calculation is NOT LLM-based, risk/financial calculations be deterministic and tool-based.
 """
 
 from __future__ import annotations

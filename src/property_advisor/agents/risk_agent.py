@@ -3,7 +3,7 @@
 Deterministic, tool-based aggregation of vacancy/crime/flood/regulatory/
 market-volatility risk into a single 0-100 risk_score. Sets
 requires_human_review when risk_score exceeds the configured threshold,
-implementing CLAUDE.md's Risk-Based Routing.
+implementing Risk-Based Routing.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Structured per-agent logging + LangSmith tracing.
 
 Every agent must log agent_name, an input summary, an output summary, and
-execution_time (CLAUDE.md's Logging and Observability section). Logs are
+execution_time. Logs are
 written as JSON lines to ./logs/project.log and mirrored to the console.
 
 Each agent is also wrapped with LangSmith's @traceable decorator so it shows
