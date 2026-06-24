@@ -37,7 +37,7 @@ MAX_REANALYSIS_RETRIES = int(os.getenv("MAX_REANALYSIS_RETRIES", "2"))
 AUTO_APPROVE_HUMAN_REVIEW = os.getenv("AUTO_APPROVE_HUMAN_REVIEW", "false").lower() == "true"
 
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
-API_PORT = int(os.getenv("API_PORT", "8000"))
+API_PORT = int(os.getenv("API_PORT", "8080"))
 
 # Propagate the resolved tracing config back into the environment so both
 # LangGraph/LangChain's internal tracer and the langsmith SDK's @traceable

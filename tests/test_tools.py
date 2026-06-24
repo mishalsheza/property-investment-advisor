@@ -77,8 +77,11 @@ def test_investment_metrics_negative_roi_for_low_yield_high_price_property():
     market_data = get_market_data("Mumbai", "Worli", slug="worli_mumbai")
     metrics = compute_investment_metrics(property_data, market_data, budget=45_000_000, horizon_years=5)
     assert metrics["roi_pct"] < 0
-    assert metrics["negative_cash_flow"] is True
-    assert metrics["cash_flow_severity"] == "significantly_negative"
+    # Operating cash flow is positive (the asset earns money before financing); the
+    # leveraged EMI shortfall is reported separately and is the routine Indian-rental case.
+    assert metrics["negative_cash_flow"] is False
+    assert metrics["cash_flow_severity"] == "positive"
+    assert metrics["levered_cash_flow_negative"] is True
     assert metrics["strong_appreciation_evidence"] is False
 
 
@@ -86,8 +89,10 @@ def test_strong_appreciation_evidence_true_for_high_growth_corridor_despite_nega
     property_data = get_property_data("Whitefield, Bangalore")
     market_data = get_market_data("Bangalore", "Whitefield", slug="whitefield_bangalore")
     metrics = compute_investment_metrics(property_data, market_data, budget=9_500_000, horizon_years=5)
-    assert metrics["negative_cash_flow"] is True
-    assert metrics["cash_flow_severity"] == "significantly_negative"
+    # Operating cash flow is positive; only the leveraged figure is negative (normal here).
+    assert metrics["negative_cash_flow"] is False
+    assert metrics["cash_flow_severity"] == "positive"
+    assert metrics["levered_cash_flow_negative"] is True
     assert metrics["strong_appreciation_evidence"] is True
 
 

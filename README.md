@@ -94,22 +94,74 @@ Each agent reads/writes only the fields relevant to its responsibility.
 
 ### Recommendation logic & cash-flow tradeoff rules
 
-Negative cash flow is never silently waved through into a BUY. This is enforced in two
-places — the Recommendation Agent's prompt (`agents/recommendation_agent.py`) tells the
-model the rules, and a deterministic post-processing step (`_enforce_cashflow_safety_net`)
-enforces them regardless of what the model outputs, so the rule holds even if the model
-doesn't comply:
+The Recommendation Agent decides from the **whole picture** — total return (`roi_pct`,
+which already folds in 5-year appreciation and cash flow), income (`rental_yield_pct`),
+risk (`risk_score`), and RAG evidence — never from a single metric. The prompt
+(`agents/recommendation_agent.py`) gives lean guidance (strong total return + solid yield
++ acceptable risk → lean BUY; mixed signals → HOLD; reserve AVOID for genuinely poor
+deals), and a deterministic post-processing step (`_enforce_cashflow_safety_net`)
+guarantees the operating cash-flow rule holds even if the model doesn't comply.
 
-- If `investment_metrics.negative_cash_flow` is true (rental strategy): confidence is
-  multiplied by 0.8, and the justification must name the cash-flow figure.
-- If `investment_metrics.cash_flow_severity == "significantly_negative"` and
-  `strong_appreciation_evidence` is **false**: a BUY decision is forcibly downgraded to
-  HOLD (confidence capped at 0.55), with an explicit override note appended to the
-  justification.
+**Operating vs. leveraged cash flow (the key distinction).** `cash_flow_severity` and
+`negative_cash_flow` describe the property's **operating** (unlevered) economics — whether
+the asset itself earns money after expenses, independent of financing. The fully-leveraged
+shortfall (an 80%-LTV EMI that net rent rarely covers) is reported **separately** as
+`levered_cash_flow_negative` and treated as a financing caveat, not a disqualifier. This
+matters because Indian gross rental yields (~2–6%) never cover an 80%-LTV EMI, so a
+leveraged figure is deeply negative for essentially every property — using it as the
+primary signal previously labeled the entire market `significantly_negative` and biased
+recommendations toward AVOID (see "Recommendation-bias fix" below).
+
+The deterministic rules are now:
+
+- If `levered_cash_flow_negative` is true (rental strategy): confidence is multiplied by
+  0.95 and a financing caveat is appended to the justification — a nudge, not a downgrade.
+- If `cash_flow_severity == "significantly_negative"` (the asset loses money *before*
+  financing) and `strong_appreciation_evidence` is **false**: a BUY is forcibly downgraded
+  to HOLD (confidence capped at 0.55), with an override note appended.
 - `strong_appreciation_evidence` (computed deterministically in
   `tools/financial_calculator.py`) requires BOTH `appreciation_rate_5yr_pct >= 8.0` AND
   `roi_pct >= 15.0` — a high ROI alone (which leverage math can produce) isn't enough;
   the underlying market appreciation rate must itself be strong.
+
+### Recommendation-bias fix (operating vs. leveraged cash flow)
+
+**Symptom.** The engine returned **AVOID** for almost every property despite the expanded
+datasets and RAG corpus.
+
+**Root cause.** `cash_flow_severity` and `negative_cash_flow` in
+`tools/financial_calculator.py` were computed on a **fully-leveraged** basis (80% LTV @ 9%
+over 20 years). Indian gross rental yields (2–5.6% in the mock data) can never cover that
+EMI, so **34/34 properties** came out `significantly_negative` with `negative_cash_flow =
+true`. The Recommendation Agent's prompt then carried a hard rule mandating HOLD/AVOID on
+`significantly_negative` cash flow, so nearly every property was pushed to AVOID regardless
+of its ROI, appreciation, yield, or risk.
+
+**Fix (minimal, two files).**
+
+- `tools/financial_calculator.py`: `cash_flow_severity` and `negative_cash_flow` are now
+  computed from the **unlevered operating** cash flow (financing-independent), and a new
+  `levered_cash_flow_negative` field carries the financing caveat separately.
+- `agents/recommendation_agent.py`: the prompt now weighs the combined picture and treats
+  leveraged-negative cash flow as a confidence caveat, not a near-automatic AVOID; the
+  safety net only forces a BUY→HOLD downgrade when the property is *operating*-negative.
+
+**Validation (Groq `llama-3.3-70b-versatile`).** Representative 10-property sample, same
+model before and after:
+
+| Decision | BEFORE | AFTER |
+|----------|:------:|:-----:|
+| BUY      | 2      | 6     |
+| HOLD     | 0      | 2     |
+| AVOID    | 8      | 2     |
+
+Decisions are now discriminating, not merely flipped: strong deals (ROI 13–34%) → BUY;
+genuinely poor deals (Worli ROI −9.1%, Andheri −0.96%, low yield) → still AVOID; borderline
+(Dwarka ROI 2.4%) and high-risk (Dadar, flood risk_score 80) → HOLD. Confidence recovered
+from a 0.16–0.64 range to 0.57–0.80. Across the full 34-property dataset the deterministic
+change moves `cash_flow_severity` from 34/34 `significantly_negative` to 34/34 `positive`
+(operating basis), with the leverage caveat preserved on all 34 via
+`levered_cash_flow_negative`. Reproduce with `python scripts/validate_recommendations.py`.
 
 ### Guardrail checks
 
@@ -119,7 +171,9 @@ The Guardrail Agent (`agents/guardrail_agent.py`) evaluates every recommendation
   classification is treated as a hard floor (risk_score >= 80) in the Risk Assessment
   Agent, since a single severe physical risk shouldn't be diluted by an otherwise-average
   weighted score.
-- `negative_cash_flow == true`
+- `negative_cash_flow == true` (operating/unlevered basis — the asset loses money before
+  financing; the routine leveraged-EMI shortfall is `levered_cash_flow_negative` and does
+  not by itself trigger review)
 - `confidence_score < GUARDRAIL_CONFIDENCE_THRESHOLD` (default 0.70)
 - `property_data` / `market_data` incomplete
 - Conflicting evidence in the RAG context (explicit known-conflict source pairs)
@@ -131,20 +185,22 @@ Output shape:
 {
   "status": "human_review_required",
   "reasons": [
-    "Negative annual cash flow (INR -505550.04).",
-    "Recommendation confidence 0.64 is below threshold 0.7."
+    "Risk score 80.0 exceeds the human-review threshold of 75."
   ],
   "missing_property_data": false,
   "missing_market_data": false,
-  "high_risk": false,
-  "negative_cash_flow": true,
-  "confidence_below_threshold": true,
+  "high_risk": true,
+  "negative_cash_flow": false,
+  "confidence_below_threshold": false,
   "conflicting_evidence": false,
   "conflicts": [],
   "has_unsupported_claims": false,
   "unsupported_claims": []
 }
 ```
+
+(`negative_cash_flow` is `false` for typical properties post-fix because it now reflects
+operating economics; it flips to `true` only for assets that lose money before financing.)
 
 `status` is one of:
 - **`human_review_required`** — the normal path; human approval is mandatory for every
@@ -334,26 +390,27 @@ Useful when presenting live and you want to narrate each part of the spec rather
 running `--demo`. Each one exercises a different code path — read "what to look for"
 before approving.
 
-**1. Happy path — BUY survives only because of strong appreciation evidence**
+**1. Happy path — BUY on strong total return, with a leverage caveat**
 
 ```bash
 .venv/bin/python main.py --address "Whitefield, Bangalore, 560066" --budget 9500000 \
   --horizon 5 --strategy rental
 ```
-What to look for: `investment_metrics.negative_cash_flow == true` AND
+What to look for: `investment_metrics.negative_cash_flow == false` (operating cash flow is
+positive) but `levered_cash_flow_negative == true`; `roi_pct` strong (~28%) and
 `strong_appreciation_evidence == true`; `recommendation.decision == "BUY"` with a
-justification that explicitly names the cash-flow figure and explains why appreciation
-outweighs it; `recommendation.confidence_score` reduced (~0.8x); `guardrail_result.status
-== "human_review_required"` with `reasons` listing the negative cash flow.
+justification that notes the EMI/leverage caveat; `recommendation.confidence_score` healthy
+(~0.8, trimmed only ~0.95x for the caveat).
 
-**2. AVOID case — negative cash flow without strong appreciation**
+**2. AVOID case — weak total return, not merely negative leveraged cash flow**
 
 ```bash
 .venv/bin/python main.py --address "Worli, Mumbai" --budget 45000000 \
   --horizon 5 --strategy rental --auto-approve
 ```
-What to look for: `strong_appreciation_evidence == false`, `roi_pct < 0`,
-`recommendation.decision == "AVOID"`.
+What to look for: `strong_appreciation_evidence == false`, `roi_pct < 0` (negative total
+return), low `rental_yield_pct` (~1.6%); `recommendation.decision == "AVOID"` — driven by
+the genuinely poor combined economics, not by the leverage caveat alone.
 
 **3. Human review triggered by flood risk**
 

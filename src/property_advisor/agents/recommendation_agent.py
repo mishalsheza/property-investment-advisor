@@ -30,18 +30,31 @@ from property_advisor.state import PropertyState
 
 SYSTEM_PROMPT = """Indian real-estate Recommendation Agent. Output BUY, HOLD, or AVOID.
 
-Rules:
-- Use ONLY the numbers given below. Never invent figures.
-- rental strategy: weigh rental_yield_pct and cash_flow_severity most.
-- flip / long_term_appreciation: weigh roi_pct and appreciation most.
-- High risk_score or conflicting evidence -> lower confidence_score.
+Decide from the WHOLE picture, never a single metric. Use ONLY the numbers \
+given below; never invent figures. Weigh together:
+- Total return: roi_pct (already includes 5-yr appreciation AND cash flow) and \
+the market appreciation rate.
+- Income: rental_yield_pct and cash_flow_severity (this describes OPERATING \
+cash flow, before any loan).
+- Risk: risk_score (0-100, higher = worse) and data_quality_confidence.
+- RAG evidence: let supporting or contradicting context move the call.
 
-Cash-flow rules (mandatory):
-- negative_cash_flow=true: never default to BUY; lower confidence_score; \
-justification must name the cash-flow figure and the tradeoff.
-- cash_flow_severity="significantly_negative": decision must be HOLD or AVOID \
-UNLESS strong_appreciation_evidence=true (a given flag). If true, BUY is allowed \
-but justification must say why appreciation outweighs the cash-flow drag.
+Guidance (lean, not rigid thresholds):
+- Strong total return + solid yield + acceptable risk -> lean BUY.
+- Mixed or borderline signals -> HOLD.
+- Reserve AVOID for genuinely poor deals: negative/very weak roi_pct, very low \
+yield, or high risk -- NOT merely because a leveraged buyer sees negative \
+monthly cash flow.
+
+Financing caveat: levered_cash_flow_negative=true means an 80%-LTV EMI exceeds \
+net rent. This is normal for Indian rentals (appreciation, not monthly cash \
+flow, drives most returns). Treat it as a confidence/risk caveat worth a \
+mention -- it does NOT by itself justify AVOID, and a strong total return can \
+still warrant BUY.
+
+Operating cash-flow rule (mandatory): cash_flow_severity="significantly_negative" \
+(the asset loses money even before financing) -> decision must be HOLD or AVOID \
+UNLESS strong_appreciation_evidence=true.
 
 Be concise. Max 2 sentences in justification, up to 3 supporting_evidence items."""
 
@@ -63,6 +76,7 @@ def _compact_metrics(metrics: dict) -> dict:
         "annual_cash_flow_inr",
         "cash_flow_severity",
         "negative_cash_flow",
+        "levered_cash_flow_negative",
         "strong_appreciation_evidence",
         "break_even_years",
         "data_quality_confidence",
@@ -85,37 +99,42 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
     if not metrics or state.investment_strategy != "rental":
         return result
 
-    negative_cash_flow = bool(metrics.get("negative_cash_flow"))
+    # negative_cash_flow / significantly_negative now describe OPERATING
+    # (unlevered) economics: an asset that loses money before any financing is
+    # a genuine red flag. The leveraged shortfall is a separate, expected
+    # financing caveat that should temper confidence, not force a downgrade.
+    operating_negative = bool(metrics.get("negative_cash_flow"))
     significantly_negative = metrics.get("cash_flow_severity") == "significantly_negative"
     strong_appreciation = bool(metrics.get("strong_appreciation_evidence"))
+    levered_negative = bool(metrics.get("levered_cash_flow_negative"))
 
     decision = result.decision
     confidence = result.confidence_score
     justification = result.justification
     overridden = False
 
-    if negative_cash_flow:
-        # Never automatically BUY on the back of negative cash flow alone,
-        # and always reduce confidence to reflect the added uncertainty.
-        confidence = round(confidence * 0.8, 2)
-
     if significantly_negative and not strong_appreciation and decision == "BUY":
+        # Only override when the property loses money on an OPERATING basis and
+        # appreciation isn't strong enough to compensate — not for ordinary
+        # leveraged-cash-flow negativity, which is normal for Indian rentals.
         decision = "HOLD"
         confidence = round(min(confidence, 0.55), 2)
         overridden = True
         justification = (
             f"{justification} [Guardrail override: the Recommendation Agent's original BUY call "
-            f"was downgraded to HOLD because annual_cash_flow_inr="
-            f"{metrics.get('annual_cash_flow_inr')} is significantly negative for a rental "
-            f"strategy and strong_appreciation_evidence was not met — appreciation alone is not "
-            f"strong enough to outweigh the cash-flow drag.]"
+            f"was downgraded to HOLD because the property's operating (pre-financing) cash flow is "
+            f"significantly negative and strong_appreciation_evidence was not met.]"
         )
 
-    if not overridden and negative_cash_flow and "cash flow" not in justification.lower():
-        # Safety net for the explanation requirement even if the model forgot to mention it.
+    if not overridden and levered_negative and "cash flow" not in justification.lower():
+        # Surface the financing caveat and trim confidence slightly — but never
+        # force a downgrade on leverage alone.
+        confidence = round(confidence * 0.95, 2)
         justification = (
-            f"{justification} [Note: annual_cash_flow_inr={metrics.get('annual_cash_flow_inr')} "
-            f"is negative; this reduces the confidence of this recommendation for a rental investor.]"
+            f"{justification} [Note: at 80% loan-to-value the EMI exceeds net rent (levered annual "
+            f"cash flow INR {metrics.get('annual_cash_flow_inr')}); Indian rentals typically rely on "
+            f"appreciation rather than monthly cash flow, so this is a confidence caveat, not a "
+            f"disqualifier.]"
         )
 
     return RecommendationOutput(
