@@ -9,7 +9,6 @@ guardrails and a mandatory human approval step before any final report is produc
 Ships as a CLI (`main.py`), a FastAPI backend (`app.py`), and a static frontend
 (`frontend/index.html`) — all driving the *same* LangGraph workflow.
 
-See `CLAUDE.md` for the original specification this implementation follows.
 
 ## Architecture
 
@@ -56,9 +55,7 @@ graph TD;
 | 6 | Recommendation Agent | **LLM (Groq)** + deterministic safety net | BUY/HOLD/AVOID + justification + confidence |
 | 7 | Guardrail Agent | deterministic checks + **LLM (Groq)** claim audit | Decides `human_review_required` / `request_reanalysis` / `refuse` |
 
-Agents 1-5 are intentionally deterministic and tool-based — CLAUDE.md's coding
-standards prefer deterministic workflows and require financial/risk calculations to be
-tool-based, not LLM-based. Only the Recommendation Agent (judgment call) and the
+Agents 1-5 are intentionally deterministic and tool-based —not LLM-based. Only the Recommendation Agent (judgment call) and the
 Guardrail Agent's unsupported-claims check (reading comprehension) call an LLM, and
 both use **Groq only**.
 
@@ -187,8 +184,7 @@ evidence, guardrail reasons, human approval decision, and a timestamp.
 
 ### Data sources
 
-No live scraping — all data is a curated **mock dataset** (an explicitly allowed
-source per CLAUDE.md), so the project runs offline except for Groq LLM calls:
+No live scraping — all data is a curated **mock dataset** , so the project runs offline except for Groq LLM calls:
 
 - `src/property_advisor/data/mock_properties.json` — 5 Indian properties spanning a
   high-growth IT corridor, an expensive low-yield Tier-1 micro-market, a monsoon
