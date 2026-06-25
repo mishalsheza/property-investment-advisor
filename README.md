@@ -1,4 +1,4 @@
-# Property Alpha AI - Indian Property Investment Advisor
+# Property AI - Indian Property Investment Advisor
 
 A LangGraph-based property investment advisor for the Indian real estate market.
 Given a property address, INR budget, horizon, and strategy, it produces a grounded
