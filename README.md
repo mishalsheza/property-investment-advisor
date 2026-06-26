@@ -53,6 +53,179 @@ graph TD;
   negative operating cash flow, conflicting RAG evidence, and unsupported claims.
 - Human review is mandatory before a final report is produced.
 
+## Low-Level Design (LLD)
+
+The Property AI system is implemented using a modular multi-agent architecture orchestrated by **LangGraph**.
+
+LangGraph maintains a shared `PropertyState` throughout execution, routes control between agents, manages retry logic for missing data and recommendation validation, and coordinates the mandatory human-in-the-loop approval process before report generation.
+
+Each agent performs a single responsibility and updates only the fields relevant to its task, making the workflow modular, maintainable, and easy to extend.
+```mermaid
+classDiagram
+
+%% ==========================
+%% ORCHESTRATOR
+%% ==========================
+
+class LangGraph {
+    +build_graph()
+    +route_workflow()
+    +manage_state()
+    +retry_missing_data()
+    +reanalyse_recommendation()
+    +interrupt_for_human_review()
+}
+
+%% ==========================
+%% SHARED STATE
+%% ==========================
+
+class PropertyState {
+    +property_address : str
+    +budget : float
+    +investment_horizon_years : int
+    +investment_strategy : str
+
+    +property_data : dict
+    +market_data : dict
+    +rag_context : list
+
+    +investment_metrics : dict
+    +risk_assessment : dict
+
+    +recommendation : dict
+    +guardrail_result : dict
+
+    +requires_human_review : bool
+    +human_decision : dict
+    +final_report : dict
+
+    +data_retry_count : int
+    +reanalysis_retry_count : int
+    +workflow_status : str
+    +errors : list
+}
+
+%% ==========================
+%% AGENTS
+%% ==========================
+
+class PropertyAgent{
+    +lookup_property()
+    +validate_input()
+}
+
+class MarketAgent{
+    +fetch_market_data()
+}
+
+class RAGAgent{
+    +query_chromadb()
+    +retrieve_documents()
+    +build_rag_context()
+}
+
+class InvestmentMetricsAgent{
+    +calculate_roi()
+    +calculate_cap_rate()
+    +calculate_rental_yield()
+    +calculate_cash_flow()
+}
+
+class RiskAssessmentAgent{
+    +compute_risk_score()
+}
+
+class RecommendationAgent{
+    +generate_recommendation()
+}
+
+class GuardrailAgent{
+    +check_risk()
+    +check_confidence()
+    +check_missing_data()
+    +check_conflicting_evidence()
+    +validate_claims()
+}
+
+class HumanApproval{
+    +approve()
+    +reject()
+}
+
+class ReportGenerator{
+    +generate_json()
+    +generate_markdown()
+    +generate_pdf()
+}
+
+%% ==========================
+%% DATA SOURCES
+%% ==========================
+
+class MockData{
+    +mock_properties.json
+    +mock_market_trends.json
+    +mock_risk_data.json
+}
+
+class ChromaDB{
+    +vector_search()
+}
+
+class GroqLLM{
+    +invoke()
+}
+
+%% ==========================
+%% ORCHESTRATION
+%% ==========================
+
+LangGraph --> PropertyAgent
+LangGraph --> MarketAgent
+LangGraph --> RAGAgent
+LangGraph --> InvestmentMetricsAgent
+LangGraph --> RiskAssessmentAgent
+LangGraph --> RecommendationAgent
+LangGraph --> GuardrailAgent
+LangGraph --> HumanApproval
+
+%% ==========================
+%% SHARED STATE
+%% ==========================
+
+PropertyAgent --> PropertyState
+MarketAgent --> PropertyState
+RAGAgent --> PropertyState
+InvestmentMetricsAgent --> PropertyState
+RiskAssessmentAgent --> PropertyState
+RecommendationAgent --> PropertyState
+GuardrailAgent --> PropertyState
+HumanApproval --> PropertyState
+ReportGenerator --> PropertyState
+
+%% ==========================
+%% EXTERNAL DEPENDENCIES
+%% ==========================
+
+PropertyAgent --> MockData
+MarketAgent --> MockData
+RiskAssessmentAgent --> MockData
+
+RAGAgent --> ChromaDB
+
+RecommendationAgent --> GroqLLM
+GuardrailAgent --> GroqLLM
+
+%% ==========================
+%% FINAL FLOW
+%% ==========================
+
+GuardrailAgent --> HumanApproval
+HumanApproval --> ReportGenerator
+```
+
+
 ## Data
 
 No live scraping. The project uses curated mock data and a local RAG corpus:
